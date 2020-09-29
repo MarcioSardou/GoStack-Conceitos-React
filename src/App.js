@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import { useEffect } from "react";
 import  api  from 'services/api'
 
 import "./styles.css";
@@ -6,20 +7,31 @@ import "./styles.css";
 function App() {
 
   const [repositories, setRepositories] = useState([])
+  const [likes, setLikes] = useState(0)
 
   async function handleAddRepository() {
-    api.post('/repositories',{
-      title: `Repository ${Date.now()}`,
-    }).then(response => {
-      const newRepository = response.data
 
-      setRepositories([...repositories,newRepository])
+    const response = await api.post('/repositories',{
+      title: `Repository ${Date.now()}`,
+      owner: 'Marcio'
+      
     })
+    const newRepository = response.data
+
+    setRepositories([...repositories,newRepository])
   }
-  
   async function handleRemoveRepository(id) {
-    api.delete('/repositories').then(response => console.log(response.data))
+    const response = await api.delete(`repositories/${id}`)
+
+    if(response.status === 204) {
+      const repository = repositories.filter(repository => repository.id !== id)
+      setRepositories(repository)
+    }
   }
+
+  useEffect(() => {
+    api.get('/repositories').then(response => setRepositories(response.data))
+  },[])
 
   return (
     <div>
@@ -28,7 +40,7 @@ function App() {
           <li key={repository.id}>
             {repository.title}
 
-            <button onClick={() => handleRemoveRepository(1)}>
+            <button onClick={() => handleRemoveRepository(repository.id)}>
             Remover
             </button>
           </li>
